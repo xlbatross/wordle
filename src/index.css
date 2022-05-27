@@ -1,7 +1,37 @@
+/* NYT Fonts */
+@font-face {
+  font-family: 'nyt-karnakcondensed';
+  src: url('../src/fonts/karnakcondensed-normal-700.woff2') format('woff2'),
+      url('../src/fonts/karnakcondensed-normal-700.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'nyt-franklin';
+  src: url('../src/fonts/franklin-normal-500.woff2') format('woff2'),
+    url('../src/fonts/franklin-normal-500.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'nyt-franklin-700';
+  src: url('../src/fonts/franklin-normal-700.woff2') format('woff2'),
+    url('../src/fonts/franklin-normal-700.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+}
+
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  text-align: center;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: 'Clear sans', 'Helvetica Neue', Arial, 
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
