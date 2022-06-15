@@ -13,9 +13,13 @@ import { WindowContext } from "./context/WindowContext";
 import { SettingContext } from './context/SettingContext';
 import { AlertContext } from './context/AlertContext';
 import { initState, loadSetting, loadState, saveSetting, saveState, updateFailure, updateSuccess } from './data/init';
+import HeightWarning from './components/HeightWarning';
 
-const data = axios.get('http://146.56.148.12:5000/api/data').then((res) => {
-    console.log(res.data)
+let word = ""
+axios.get('http://146.56.148.12/api/data').then((res) => {
+    word = res.data.word.toUpperCase()
+}).catch(() => {
+    word = words[Math.floor(Math.random() * words.length)].toUpperCase()
 })
 
 const wordIndex = words.reduce((acc, cur, i) => {
@@ -82,11 +86,22 @@ export default function App() {
     })
 
     useEffect(() => {
-        console.log(data)
+        console.log(word)
     }, [])
 
+    const incorrect = (lineIndex, string) => {
+        setCAlert({
+            ...cAlert,
+            visibleCount: cAlert.visibleCount + 1, 
+            string: string
+        }) 
+        if (currentIndex[1] !== letterState[0].length) {
+            setCurrentIndex([lineIndex, letterState[0].length]) // 레터박스 라인의 쉐이크 애니메이션 동작
+        }
+    }
+
     const onInput = (key) => {
-        //  이미 클리어 판정이 났거나 레터박스의 플립 애니메이션 도중이라면,
+        // 이미 클리어 판정이 났거나 레터박스의 플립 애니메이션 도중이라면,
         if (lastState.clear !== INIT || trans) {
             return // 동작하지 않는다.
         }
@@ -111,16 +126,9 @@ export default function App() {
                 tempLetter[lineIndex][eraseIndex].letter = '' // 지운다
                 setLetterState(tempLetter) // 레터 박스 상태 업데이트
             }
-        } else if (key === 'ENTER') { // 입력된 키 값이 엔터였다면
+        } else if (key === 'ENTER' && word !== "") { // 입력된 키 값이 엔터이고 단어가 동기화됐다면
             if (letterIndex !== -1) { // 글자가 모두 입력되지 않았다면
-                setCAlert({
-                    ...cAlert,
-                    visibleCount: cAlert.visibleCount + 1, 
-                    string: "Not enough letters"
-                }) // 모두 입력되지 않았음을 알리고
-                if (currentIndex[1] !== letterState[0].length) {
-                    setCurrentIndex([lineIndex, letterState[0].length]) // 레터박스 라인의 쉐이크 애니메이션 동작
-                }
+                incorrect(lineIndex, "Not enough letters") // 글자가 부족함을 알리고
                 return // 이후 동작하지 않는다
             } else { // 글자가 모두 입력되었다면
                 const lineWord = tempLetter[lineIndex].reduce((acc, cur) => {
@@ -128,20 +136,35 @@ export default function App() {
                     return acc
                 }, '') // 레터박스 라인의 글자를 하나로 합쳐 단어 생성
                 if (!wordIndex.has(lineWord)) { // 생성된 단어가 존재하는지 확인하여 만약 없다면
-                    setCAlert({
-                        ...cAlert,
-                        visibleCount: cAlert.visibleCount + 1, 
-                        string: "Not in word list"
-                    }) // 단어 리스트에 없다고 알리고
-                    if (currentIndex[1] !== letterState[0].length) {
-                        setCurrentIndex([lineIndex, letterState[0].length]) // 레터박스 라인의 쉐이크 애니메이션 동작
-                    }
+                    incorrect(lineIndex, "Not in word list") // 단어가 존재하지 않음을 알리고
                     return  // 이후 동작하지 않는다.
+                } else if (hardMode && currentIndex[0] > 0) {
+                    const previousExistLetter = tempLetter[lineIndex - 1].reduce((acc, cur) => {
+                        if (cur.state >= EXIST) {
+                            acc.push(cur.letter)
+                        }
+                        return acc
+                    }, [])
+
+                    if (previousExistLetter.length > 0) {
+                        lineWord.split("").map((cur) => {
+                            const index = previousExistLetter.indexOf(cur)
+                            if (index !== -1) {
+                                previousExistLetter.splice(index, 1)
+                            }
+                            return null
+                        })
+
+                        if (previousExistLetter.length > 0) {
+                            incorrect(lineIndex, "Guess must contain " + previousExistLetter[0])
+                            return
+                        }
+                    }
                 }
             }
             // 입력된 글자에 대한 상태 판단
             // JUST, EXIST, NONE 순으로 판단한다.
-            lastState.word.split('').reduce((acc, cur, i) => { // 정답 단어를 분해하여 배열 형태로 변환하여 reduce. 초기값은 빈 배열로 최종적으로 JUST 판정이 난 글자들을 다른 글자로 치환한 배열이 나온다.
+            word.split('').reduce((acc, cur, i) => { // 정답 단어를 분해하여 배열 형태로 변환하여 reduce. 초기값은 빈 배열로 최종적으로 JUST 판정이 난 글자들을 다른 글자로 치환한 배열이 나온다.
                 if (cur === tempLetter[lineIndex][i].letter) { // 단어의 특정 위치의 글자가 현재 레터 박스 라인의 같은 위치의 글자와 동일하다면
                     tempLetter[lineIndex][i].state = JUST // 해당 레터 박스 글자의 상태를 JUST로 수정
                     acc.push('0') // 그리고 이미 JUST 판정이 난 글자는 알파벳이 아닌 글자로 수정해서 추가로 JUST가 나오지 않도록 한다. 
@@ -237,12 +260,28 @@ export default function App() {
     } // 다크 모드 상태 변화 이벤트
 
     const onHard = () => {
-        setHardMode(!hardMode)
-        saveSetting({
-            darkMode: darkMode,
-            highContrastMode: highContrastMode,
-            hardMode: !hardMode
-        })
+        let next = hardMode
+        if (hardMode) {
+            next = false
+        } else if (!hardMode) {
+            if (currentIndex[0] === 0) {
+                next = true
+            } else {
+                setCAlert({
+                    ...cAlert,
+                    visibleCount: cAlert.visibleCount + 1, 
+                    string: "Hard mode can only be enabled at the start of a round"
+                })
+            }
+        }
+        if (next !== hardMode) {
+            setHardMode(next)
+            saveSetting({
+                darkMode: darkMode,
+                highContrastMode: highContrastMode,
+                hardMode: next
+            })
+        }
     } // 하드 모드 상태 변화 이벤트
 
     const onContrast = () => {
@@ -275,6 +314,7 @@ export default function App() {
             </FilpEndContext.Provider>
             <Keyboard keyboardState={keyboardState} onInput={onInput} />
             <Alert cAlert={cAlert} alertClear={alertClear} />
+            <HeightWarning />
         </SettingContext.Provider>
         </AlertContext.Provider>
         </WindowContext.Provider>

@@ -1,10 +1,8 @@
 import { INIT, keyLetters } from "./constants"
-import words from "./words.json"
 
 export const initState = {
     date: now(), // 현재 날짜
     clear: INIT, // 클리어 상태: 초기 상태. 클리어 미정
-    word: words[Math.floor(Math.random() * words.length)].toUpperCase(), // 정답 단어. 랜덤으로 정해진 대문자 단어.
     // 현재 레터박스 입력 위치 상태를 표현하는 배열. (현재 글자가 입력된 레터박스 라인과 그 라인 안에 입력된 인덱스를 저장하는 배열.)
     // 배열 0번째 인덱스는 글자가 입력된 레터박스 라인을 표시하고
     // 배열 1번째 인덱스는 그 레터박스 라인에서 현재 입력된 글자의 인덱스를 표시. 
@@ -50,7 +48,7 @@ function now() {
     const month = ((dateObject.getMonth() < 9) ? '0' : '') + (dateObject.getMonth() + 1).toString()
     const date = ((dateObject.getDate() <= 9) ? '0' : '') + dateObject.getDate().toString()
     return year + month + date
-}
+} // 현재 년월일을 반환하는 함수
 
 export function loadState() {
     const previous = JSON.parse(sessionStorage.getItem("lastState"))

@@ -12,6 +12,7 @@ export const footerPadding = 8
 export const keyGap = 6
 export const keyLineGap = 8
 export const blurPadding = 25
+export const maxHeight = 450
 
 // ms 기준
 export const delay = [0,100,200,300,400]
