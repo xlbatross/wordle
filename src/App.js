@@ -1,4 +1,4 @@
-import { clearMention, darkColorTone, EXIST, FAILURE, INIT, JUST, keyLetters, lightColorTone, NONE, NOTOPEN, STATISTICS, SUCCESS } from './data/constants';
+import { clearMention, darkColorTone, EXIST, fadeTime, FAILURE, INIT, JUST, keyLetters, lightColorTone, NONE, NOTOPEN, STATISTICS, SUCCESS } from './data/constants';
 import words from "./data/words.json";
 import { cloneDeep } from 'lodash';
 import { useState, useEffect } from 'react';
@@ -52,15 +52,22 @@ export default function App() {
     // 레터박스가 플립 애니메이션 도중이라 함은 그 단어가 올바른 단어인지를 체크하여 보여주는 도중이기에 입력 이벤트가 동작하지 못하게 하기 위함
     // 만약 스토리지에 이미 입력된 레터박스 라인이 존재한다면 랜더링 후 플립 애니메이션이 동작한다.
     const [trans, setTrans] = useState((lastState.currentIndex[0] > 0))
-    const [cAlert, setCAlert] = useState({
-        visibleCount: 0,
-        string: '',
-        isClearMention: false
-    }) // 커스텀 알림
+    const [cAlert, setCAlert] = useState([]) // 커스텀 알림
     const [popMenu, setPopMenu] = useState(NOTOPEN) // 헤더 메뉴 오픈 상태
     const [darkMode, setDarkMode] = useState(setting.darkMode) // 다크 모드 상태
     const [hardMode, setHardMode] = useState(setting.hardMode) // 하드 모드 상태
     const [highContrastMode, setHighContrastMode] = useState(setting.highContrastMode) // 색약 모드 상태
+
+    useEffect(() => {
+        const set = setTimeout(() => {
+            setCAlert([])
+            if (clearNow !== -1) {
+                setPopMenu(STATISTICS)
+                setClearNow(-1)
+            }
+        }, 1000 + fadeTime)
+        return () => {clearTimeout(set)}
+    }, [cAlert, clearNow])
 
     useEffect(() => {
         document.body.style.backgroundColor = (darkMode) ? darkColorTone[6] : lightColorTone[6]
@@ -90,11 +97,7 @@ export default function App() {
     }, [])
 
     const incorrect = (lineIndex, string) => {
-        setCAlert({
-            ...cAlert,
-            visibleCount: cAlert.visibleCount + 1, 
-            string: string
-        }) 
+        setCAlert([...cAlert, string])
         if (currentIndex[1] !== letterState[0].length) {
             setCurrentIndex([lineIndex, letterState[0].length]) // 레터박스 라인의 쉐이크 애니메이션 동작
         }
@@ -229,17 +232,10 @@ export default function App() {
             setTrans(false) // 플립 애니메이션이 끝났음을 표시
             if (clearLine >= 0 && lastState.clear === SUCCESS) { // 앱 동작 중 클리어 성공했다면
                 setClearNow(clearLine)
-                setCAlert({
-                    visibleCount: cAlert.visibleCount + 1, 
-                    string: clearMention[currentIndex[0] - 1],
-                    isClearMention: true
-                })
+                setCAlert([...cAlert, clearMention[currentIndex[0] - 1]])
             } else if (clearLine < -1 && lastState.clear === FAILURE) { // 앱 동작 중 클리어 실패했다면
-                setCAlert({
-                    visibleCount: cAlert.visibleCount + 1, 
-                    string: lastState.word,
-                    isClearMention: true
-                })
+                setClearNow(-2)
+                setCAlert([...cAlert, word])
             } else if (lastState.clear !== INIT) { // 앱 동작 전에 이미 클리어 결과가 존재한다면
                 setPopMenu(STATISTICS) // statistics 메뉴 화면을 띄운다
             }
@@ -267,11 +263,7 @@ export default function App() {
             if (currentIndex[0] === 0) {
                 next = true
             } else {
-                setCAlert({
-                    ...cAlert,
-                    visibleCount: cAlert.visibleCount + 1, 
-                    string: "Hard mode can only be enabled at the start of a round"
-                })
+                setCAlert([...cAlert, "Hard mode can only be enabled at the start of a round"])
             }
         }
         if (next !== hardMode) {
@@ -293,17 +285,6 @@ export default function App() {
         })
     } // 색약 모드 상태 변화 이벤트
 
-    const alertClear = (isClearMention) => {
-        setCAlert({
-            visibleCount: 0,
-            string: '',
-            isClearMention: false
-        })
-        if (isClearMention) {
-            setPopMenu(STATISTICS)
-        }
-    }
-
     return (
         <WindowContext.Provider value={{width, height}}>
         <AlertContext.Provider value={{cAlert, setCAlert}}>
@@ -313,7 +294,7 @@ export default function App() {
                 <Content letterState={letterState} clearNow={clearNow} currentIndex={currentIndex} onShakeEnd={onShakeEnd}></Content>
             </FilpEndContext.Provider>
             <Keyboard keyboardState={keyboardState} onInput={onInput} />
-            <Alert cAlert={cAlert} alertClear={alertClear} />
+            <Alert />
             <HeightWarning />
         </SettingContext.Provider>
         </AlertContext.Provider>

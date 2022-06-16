@@ -56,7 +56,6 @@ export function loadState() {
         saveState(initState)
         return loadState()
     } else {
-        console.log(previous)
         return previous
     }
 }
@@ -77,7 +76,6 @@ export function loadSetting() {
         saveSetting(initSetting)
         return loadSetting()
     } else {
-        console.log(previous)
         return previous
     }
 }
@@ -102,7 +100,6 @@ export function loadStatistics() {
         saveStatistics(initStatistics)
         return loadStatistics()
     } else {
-        console.log(previous)
         return previous
     }
 }

@@ -14,14 +14,21 @@ const numberWidth = 15
 
 export default function Statistics({parentWidth}) {
     const {darkMode, highContrastMode} = useContext(SettingContext)
+    const [statisticsData, setStatisticsData] = useState(loadStatistics())
+    const [stateData, setStateData] = useState(loadState())
     const distributionWidth = parentWidth / 1.3
     const distributionPadding = (parentWidth - distributionWidth) / 2
     const restWidth = distributionWidth - (2 * numberWidth)
     const zeroWidth = restWidth * 0.06
     const percentPadding = restWidth * 0.02
 
-    const statisticsData = loadStatistics()
-    const stateData = loadState()
+    useEffect(() => {
+        setStatisticsData(loadStatistics())
+    }, [])
+
+    useEffect(() => {
+        setStateData(loadState())
+    }, [])
 
     const percentCss = css`
         justify-content: right;
@@ -97,12 +104,12 @@ export default function Statistics({parentWidth}) {
             `}>
                 {clearCount}
             </div>
-            {(statisticsData.previousPlayDate === stateData.date) ? <Share parentWidth={parentWidth} /> : ''}
+            {(statisticsData.previousPlayDate === stateData.date) ? <Share parentWidth={parentWidth} stateData={stateData} /> : ''}
         </>
     )
 }
 
-function Share({parentWidth}) {
+function Share({parentWidth, stateData}) {
     const {darkMode, highContrastMode} = useContext(SettingContext)
     const {cAlert, setCAlert} = useContext(AlertContext)
     const dateObject = new Date()
@@ -132,7 +139,6 @@ function Share({parentWidth}) {
     }, (hours === '00' && minutes === '00' && seconds === '00') ? null : 1000)
 
     const copy = () => {
-        const stateData = loadState()
         const text = stateData.letterState.reduce((acc, cur) => {
             const lineText = cur.reduce((a, c) => {
                 if (c.state === NONE) {
@@ -154,11 +160,7 @@ function Share({parentWidth}) {
         } else {
             document.execCommand('copy', true, text);
         }
-        setCAlert({
-            ...cAlert,
-            visibleCount: cAlert.visibleCount + 1,
-            string: "Copied results to clipboard"
-        })
+        setCAlert([...cAlert, "Copied results to clipboard"])
     }
 
     return (
