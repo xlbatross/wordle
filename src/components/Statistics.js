@@ -156,7 +156,6 @@ function Share({parentWidth, stateData}) {
                 }
                 return acc
             }, `Wordle ${(stateData.clear === SUCCESS) ? stateData.currentIndex[0] : 'X'}/6\n\n`)
-            window.alert(text)
             if (navigator.share) {
                 navigator.share({
                     title: text,
