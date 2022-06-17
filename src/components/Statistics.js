@@ -111,7 +111,7 @@ export default function Statistics({parentWidth}) {
 
 function Share({parentWidth, stateData}) {
     const {darkMode, highContrastMode} = useContext(SettingContext)
-    const {cAlert, setCAlert} = useContext(AlertContext)
+    const {alert, setAlert} = useContext(AlertContext)
     const dateObject = new Date()
     const remainHours = 24 - dateObject.getHours() - 1
     const remainMinutes = 60 - dateObject.getMinutes() - 1
@@ -160,7 +160,7 @@ function Share({parentWidth, stateData}) {
         } else {
             document.execCommand('copy', true, text);
         }
-        setCAlert([...cAlert, "Copied results to clipboard"])
+        setAlert([...alert, "Copied results to clipboard"])
     }
 
     return (

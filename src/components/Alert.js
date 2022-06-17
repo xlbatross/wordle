@@ -18,9 +18,9 @@ const fadeOutAnimation = css`
 `
 
 export default function Alert() {
-    const {cAlert} = useContext(AlertContext)
+    const {alert} = useContext(AlertContext)
 
-    const list = cAlert.map((cur, i) => {
+    const list = alert.map((cur, i) => {
         return <PersonalAlert key={i.toString() + cur} str={cur} />
     })
 
@@ -30,10 +30,10 @@ export default function Alert() {
             left: 0;
             right: 0;
             top: 87.3px;
-            z-index: ${(cAlert.length > 0) ? 1 : -1};;
+            z-index: ${(alert.length > 0) ? 1 : -1};;
             display: flex;
             justify-content: center;
-            opacity: ${(cAlert.length > 0) ? 1 : 0};
+            opacity: ${(alert.length > 0) ? 1 : 0};
         `}>
             {list}
         </div>
