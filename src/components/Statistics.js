@@ -139,28 +139,53 @@ function Share({parentWidth, stateData}) {
     }, (hours === '00' && minutes === '00' && seconds === '00') ? null : 1000)
 
     const copy = () => {
-        const text = stateData.letterState.reduce((acc, cur) => {
-            const lineText = cur.reduce((a, c) => {
-                if (c.state === NONE) {
-                    a += `⬛`
-                } else if (c.state === EXIST) {
-                    a += (highContrastMode) ? `🟦` : `🟨`
-                } else if (c.state === JUST) {
-                    a += (highContrastMode) ? `🟧` : `🟩`
+        try {
+            const text = stateData.letterState.reduce((acc, cur) => {
+                const lineText = cur.reduce((a, c) => {
+                    if (c.state === NONE) {
+                        a += `⬛`
+                    } else if (c.state === EXIST) {
+                        a += (highContrastMode) ? `🟦` : `🟨`
+                    } else if (c.state === JUST) {
+                        a += (highContrastMode) ? `🟧` : `🟩`
+                    }
+                    return a
+                }, ``)
+                if (lineText !== ``) {
+                    acc += lineText + `\n`
                 }
-                return a
-            }, ``)
-            if (lineText !== ``) {
-                acc += lineText + `\n`
-            }
-            return acc
-        }, `Wordle ${(stateData.clear === SUCCESS) ? stateData.currentIndex[0] : 'X'}/6\n\n`)
-        if ('clipboard' in navigator) {
-            navigator.clipboard.writeText(text);
-        } else {
-            document.execCommand('copy', true, text);
+                return acc
+            }, `Wordle ${(stateData.clear === SUCCESS) ? stateData.currentIndex[0] : 'X'}/6\n\n`)
+            window.alert(text)
+            if (navigator.share) {
+                navigator.share({
+                    title: text,
+                    url: ''
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch(() => {
+                    throw new Error('failed to share')
+                });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const element = document.createElement('textarea')
+                element.value = text
+                element.setAttribute('readonly', '')
+                element.style.position = 'absolute'
+                element.style.left = '-9999px'
+                document.body.appendChild(element)
+                element.select()
+                const returnValue = document.execCommand('copy')
+                document.body.removeChild(element)
+                if (!returnValue) {
+                    throw new Error('copied nothing')
+                }
+            }  
+            setAlert([...alert, "Copied results to clipboard"])  
+        } catch (e) {
+            setAlert([...alert, e.message])  
         }
-        setAlert([...alert, "Copied results to clipboard"])
     }
 
     return (
